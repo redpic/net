@@ -1,5 +1,5 @@
 {
-  "name": "Redpic/Net",
+  "name": "redpic/net",
   "type": "library",
   "description": "Удобная обертка над curl для работы с HTTP",
   "keywords": 
