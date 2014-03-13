@@ -11,10 +11,8 @@
   {
     "php": ">=5.4.0"
   },
-  "target-dir": "Redpic/Net",
-  ,
   "autoload": 
   {
-    "psr-0":  { "Redpic\\Net": "src" }
+    "psr-4":  { "Redpic\\Net": "src" }
   }
 }
