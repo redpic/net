@@ -13,6 +13,7 @@
   },
   "autoload": 
   {
-    "psr-4":  { "Redpic\\Net\\": "src/" }
-  }
+    "psr-0":  { "Redpic\\Net\\": "" }
+  },
+  "target-dir": "Redpic/Net"
 }
