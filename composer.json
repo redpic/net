@@ -3,17 +3,25 @@
   "version": "1.0.0",
   "type": "library",
   "description": "Удобная обертка над curl для работы с HTTP",
-  "keywords": [ "curl", "net", "webbrowser" ],
+  "keywords": [
+    "curl",
+    "net",
+    "webbrowser"
+  ],
   "homepage": "https://github.com/redpic/Net",
   "license": "Apache License",
-  "authors": [ { "name": "Alexei Fortuna", "email": "info@redpic.ru", "role": "developer" } ],
-  "require": 
-  {
+  "authors": [
+    {
+      "name": "Alexei Fortuna",
+      "email": "info@redpic.ru",
+      "role": "developer"
+    }
+  ],
+  "require": {
     "php": ">=5.4.0"
   },
-  "autoload": 
-  {
-    "psr-0":  { "Redpic\\Net\\": "" }
+  "autoload": {
+    "psr-0": {"Redpic\\Net\\": ""}
   },
   "target-dir": "Redpic/Net"
 }

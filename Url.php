@@ -1,50 +1,92 @@
 <?php
-	namespace Redpic\Net;
 
-	use Redpic\Net\Exceptions\WebBrowserException;
+namespace Redpic\Net;
 
-	class Url
-	{
-		protected $url;
-		protected $scheme;
-		protected $host;
-		protected $port;
-		protected $user;
-		protected $password;
-		protected $path;
-		protected $query;
-		protected $fragment;
+use Redpic\Net\Exceptions\WebBrowserException;
 
-		public function __construct($url)
-		{
-			$this->url = trim($url);
-			if (!$arr = parse_url($this->url))
-			{
-				throw new WebBrowserException("Url: Невозможно разобрать url '" . $url . "'");
-			}
+/**
+ * Class Url
+ * @package Redpic\Net
+ */
+class Url
+{
+    /**
+     * @var string
+     */
+    protected $url;
+    /**
+     * @var null
+     */
+    protected $scheme;
+    /**
+     * @var null
+     */
+    protected $host;
+    /**
+     * @var null
+     */
+    protected $port;
+    /**
+     * @var null
+     */
+    protected $user;
+    /**
+     * @var null
+     */
+    protected $password;
+    /**
+     * @var null
+     */
+    protected $path;
+    /**
+     * @var null
+     */
+    protected $query;
+    /**
+     * @var null
+     */
+    protected $fragment;
 
-			$this->scheme = (isset($arr['scheme'])) ? $arr['scheme'] : NULL;
-			$this->host = (isset($arr['host'])) ? $arr['host'] : NULL;
-			$this->port = (isset($arr['port'])) ? $arr['port'] : NULL;
-			$this->user = (isset($arr['user'])) ? $arr['user'] : NULL;
-			$this->password = (isset($arr['pass'])) ? $arr['pass'] : NULL;
-			$this->path = (isset($arr['path'])) ? $arr['path'] : NULL;
-			$this->query = (isset($arr['query'])) ? $arr['query'] : NULL;
-			$this->fragment = (isset($arr['fragment'])) ? $arr['fragment'] : NULL;	
-		}
-		
-		public function __get($key)
-		{
-			if (!in_array($key, array('url', 'scheme', 'host', 'port', 'user', 'password', 'path', 'query', 'fragment')))
-			{
-				throw new WebBrowserException("Url: Неизвестное свойство '" . $key . "'");
-			}
+    /**
+     * @param $url
+     * @throws WebBrowserException
+     */
+    public function __construct($url)
+    {
+        $this->url = trim($url);
+        if (!$arr = parse_url($this->url)) {
+            throw new WebBrowserException("Url: Невозможно разобрать url '" . $url . "'");
+        }
 
-			return $this->$key;
-		}
-		
-		public function __toString()
-		{
-			return $this->url;
-		}
-	}
+        $this->scheme   = (isset($arr['scheme'])) ? $arr['scheme'] : null;
+        $this->host     = (isset($arr['host'])) ? $arr['host'] : null;
+        $this->port     = (isset($arr['port'])) ? $arr['port'] : null;
+        $this->user     = (isset($arr['user'])) ? $arr['user'] : null;
+        $this->password = (isset($arr['pass'])) ? $arr['pass'] : null;
+        $this->path     = (isset($arr['path'])) ? $arr['path'] : null;
+        $this->query    = (isset($arr['query'])) ? $arr['query'] : null;
+        $this->fragment = (isset($arr['fragment'])) ? $arr['fragment'] : null;
+    }
+
+    /**
+     * @param $key
+     * @return mixed
+     * @throws WebBrowserException
+     */
+    public function __get($key)
+    {
+        if (!property_exists($this, $key)) {
+            throw new WebBrowserException("Url: Неизвестное свойство '" . $key . "'");
+        }
+
+        return $this->$key;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->url;
+    }
+}
