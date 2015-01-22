@@ -21,11 +21,11 @@ class WebBrowser
     /**
      * @var null|ProxyServer $proxyServer
      */
-    protected $proxyServer;
+    protected $proxyServer = null;
     /**
      * @var null|NetworkInterface $networkInterface
      */
-    protected $networkInterface;
+    protected $networkInterface = null;
     /**
      * @var string $userAgent
      */
@@ -37,29 +37,35 @@ class WebBrowser
     /**
      * @var bool $followLocation
      */
-    protected $followLocation;
+    protected $followLocation = true;
     /**
      * @var array $data
      */
     protected $data;
 
     /**
-     * @param $url
+     * @param null|string|Url $url
      */
-    public function __construct($url)
+    public function __construct($url = null, $userAgent = UserAgent::GoogleBot)
     {
-        if ($url instanceof Url) {
-            $this->url = trim($url);
-        } else {
-            $this->url = new Url($url);
+        if (null === $url)
+        {
+            $this->url     = null;
+            $this->referer = null;
         }
-
-        $this->followLocation   = true;
-        $this->proxyServer      = null;
-        $this->networkInterface = null;
-        $this->userAgent        = UserAgent::GoogleBot;
-        $this->referer          = new Url($this->url->scheme . '://' . $this->url->host);
-        $this->cookies          = new Cookies();
+        else
+        {
+            if ($url instanceof Url) {
+                $this->url = trim($url);
+            } else {
+                $this->url = new Url($url);
+            }
+            
+            $this->referer = new Url($this->url->scheme . '://' . $this->url->host);
+        }
+        
+        $this->userAgent = $userAgent;
+        $this->cookies   = new Cookies();
     }
 
     /**
