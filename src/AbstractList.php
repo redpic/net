@@ -13,6 +13,8 @@ abstract class AbstractList implements \Countable
      */
     protected $list = array();
 
+    abstract protected function throws($message, $code = 0, \Exception $previous = null);
+
     /**
      * @param array $array
      */
@@ -30,7 +32,15 @@ abstract class AbstractList implements \Countable
     /**
      * @param integer $id
      */
-    abstract public function getObjectById($id);
+    public function getObjectById($id)
+    {
+        if (!array_key_exists($id, $this->list))
+        {
+            $this->throws("Объект с id '" . $id . "' отсутствует");
+        }
+
+        return $this->list[$id];
+    }
 
     /**
      * @return int
