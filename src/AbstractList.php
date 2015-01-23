@@ -56,7 +56,6 @@ abstract class AbstractList implements \Countable
     public function getRandomObject()
     {
         $id = array_rand($this->list);
-
         return $this->list[$id];
     }
 }
