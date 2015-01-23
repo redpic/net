@@ -6,7 +6,7 @@ namespace Redpic\Net;
  * Class Cookies
  * @package Redpic\Net
  */
-class Cookies implements \Serializable
+class Cookies implements \Serializable, \Countable
 {
     /**
      * @var array
@@ -70,7 +70,6 @@ class Cookies implements \Serializable
      */
     public function parseCookies($header)
     {
-        $cookies = array();
         $matches = array();
 
         if (preg_match_all("#Set-Cookie: (.+)#iu", $header, $matches)) {
@@ -90,10 +89,9 @@ class Cookies implements \Serializable
         $cookies = array();
 
         $csplit = (strpos($cookiesString, ';') !== false) ? explode(';', $cookiesString) : array($cookiesString);
-        $cdata  = array();
 
         foreach ($csplit as $data) {
-            $cinfo = explode('=', $data);
+            $cinfo    = explode('=', $data);
             $cinfo[0] = trim($cinfo[0]);
 
             if (!in_array(

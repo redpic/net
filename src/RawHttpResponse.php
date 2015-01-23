@@ -2,7 +2,7 @@
 
 namespace Redpic\Net;
 
-use Redpic\Net\Exceptions\WebBrowserException;
+use Redpic\Net\Exceptions\RawHttpResponseException;
 
 /**
  * Class RawHttpResponse
@@ -11,32 +11,39 @@ use Redpic\Net\Exceptions\WebBrowserException;
 class RawHttpResponse
 {
     /**
-     * @var
+     * @var string
      */
     protected $header;
     /**
-     * @var
+     * @var string
      */
     protected $content;
     /**
-     * @var
+     * @var array
      */
     protected $data;
+    /**
+     * @var array
+     */
+    protected $info;
+
 
     /**
-     * @param $response
-     * @param $data
-     * @throws WebBrowserException
+     * @param string $response
+     * @param array $data
+     * @param $info
+     * @throws RawHttpResponseException
      */
-    public function __construct($response, $data)
+    public function __construct($response, $data, $info)
     {
         list($this->header, $this->content) = self::parseHeaderContent($response);
         $this->data = $data;
+        $this->info = $info;
     }
 
     /**
-     * @param null $key
-     * @return null
+     * @param string $key
+     * @return mixed
      */
     public function getData($key = null)
     {
@@ -48,30 +55,36 @@ class RawHttpResponse
     }
 
     /**
-     * @param $key
+     * @param string $key
      * @return mixed
-     * @throws WebBrowserException
+     * @throws RawHttpResponseException
      */
     public function __get($key)
     {
+        if (array_key_exists($key, $this->info)) {
+            return $this->info[$key];
+        }
+        
         if (!in_array($key, array('header', 'content'))) {
-            throw new WebBrowserException("HttpResponse: Неизвестное свойство '" . $key . "'");
+            throw new RawHttpResponseException("Неизвестное свойство '" . $key . "'");
         }
 
         return $this->$key;
     }
 
     /**
-     * @param $content
+     * @param string $content
      * @return array
-     * @throws WebBrowserException
+     * @throws RawHttpResponseException
      */
     protected static function parseHeaderContent($content)
     {
+        $header = array();
+
         while (preg_match('#^HTTP.*#s', $content)) {
             $matches = array();
             if (!preg_match("#^(.+?)\r\n\r\n(.*)#is", $content, $matches)) {
-                throw new WebBrowserException('Error: incorrect http-answer or encoding at line ' . __LINE__);
+                throw new RawHttpResponseException('Неправильный http-ответ или кодировка в строке ' . __LINE__);
             }
 
             list($header[], $content) = self::ConvertToUtf8($matches[1], $matches[2]);
@@ -81,8 +94,8 @@ class RawHttpResponse
     }
 
     /**
-     * @param $header
-     * @param $content
+     * @param string $header
+     * @param string $content
      * @return array
      */
     protected static function convertToUtf8($header, $content)

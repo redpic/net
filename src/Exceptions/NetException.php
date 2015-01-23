@@ -3,10 +3,10 @@
 namespace Redpic\Net\Exceptions;
 
 /**
- * Class WebBrowserException
+ * Class AbstractException
  * @package Redpic\Net\Exceptions
  */
-class WebBrowserException extends \Exception
+abstract class NetException extends \Exception
 {
     /**
      * @param string $message

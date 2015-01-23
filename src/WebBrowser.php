@@ -7,37 +7,26 @@ use Redpic\Net\Exceptions\WebBrowserException;
 /**
  * Class WebBrowser
  * @package Redpic\Net
+ *
+ * @property null|Url $url
+ * @property null|Url $referer
+ * @property null|ProxyServer $proxyServer
+ * @property null|NetworkInterface $networkInterface
+ * @property string $userAgent
+ * @property Cookies $cookies
+ * @property boolean $followLocation
+ * @property int $timeout
  */
 class WebBrowser
 {
     /**
-     * @var Url $url
+     * @var array
      */
-    protected $url;
+    protected static $propertiesKeys = array('url', 'referer', 'proxyServer', 'networkInterface', 'userAgent', 'cookies', 'followLocation', 'timeout');
     /**
-     * @var Url $referer
+     * @var array $properties
      */
-    protected $referer;
-    /**
-     * @var null|ProxyServer $proxyServer
-     */
-    protected $proxyServer = null;
-    /**
-     * @var null|NetworkInterface $networkInterface
-     */
-    protected $networkInterface = null;
-    /**
-     * @var string $userAgent
-     */
-    protected $userAgent;
-    /**
-     * @var Cookies $cookies
-     */
-    protected $cookies;
-    /**
-     * @var bool $followLocation
-     */
-    protected $followLocation = true;
+    protected $properties;
     /**
      * @var array $data
      */
@@ -45,32 +34,34 @@ class WebBrowser
 
     /**
      * @param null|string|Url $url
+     * @param string $userAgent
      */
     public function __construct($url = null, $userAgent = UserAgent::GoogleBot)
     {
-        if (null === $url)
-        {
-            $this->url     = null;
-            $this->referer = null;
-        }
-        else
+        $this->properties['url'] = null;
+        $this->properties['referer'] = null;
+        $this->properties['proxyServer'] = null;
+        $this->properties['networkInterface'] = null;
+        $this->properties['followLocation'] = true;
+        $this->properties['timeout'] = 30;
+        $this->properties['userAgent'] = $userAgent;
+        $this->properties['cookies']   = new Cookies();
+
+        if (null !== $url)
         {
             if ($url instanceof Url) {
-                $this->url = trim($url);
+                $this->properties['url'] = $url;
             } else {
-                $this->url = new Url($url);
+                $this->properties['url'] = new Url(trim($url));
             }
-            
-            $this->referer = new Url($this->url->scheme . '://' . $this->url->host);
-        }
-        
-        $this->userAgent = $userAgent;
-        $this->cookies   = new Cookies();
+
+            $this->properties['referer'] = new Url($this->properties['url']->scheme . '://' . $this->properties['url']->host);
+        }  
     }
 
     /**
-     * @param null $key
-     * @return null
+     * @param string $key
+     * @return mixed
      */
     public function getData($key = null)
     {
@@ -82,8 +73,8 @@ class WebBrowser
     }
 
     /**
-     * @param $key
-     * @param $value
+     * @param string $key
+     * @param mixed $value
      */
     public function setData($key, $value)
     {
@@ -97,23 +88,20 @@ class WebBrowser
      */
     public function __set($key, $value)
     {
-        if (!property_exists($this, $key)) {
+        if (!in_array($key, self::$propertiesKeys)) {
             throw new WebBrowserException("WebBrowser: Неизвестное свойство '" . $key . "'");
         }
 
-        if ($key == 'proxyServer' && !$value instanceof ProxyServer) {
-            throw new WebBrowserException("WebBrowser: Свойство '" . $key . "' имеет не верный тип данных");
-        }
-
         if ($key == 'url') {
-            $this->referer = $this->url;
-
+            if ($this->properties['url'] instanceof Url) {
+                $this->properties['referer'] = $this->properties['url'];
+            }
             if (!$value instanceof Url) {
                 $value = new Url($value);
             }
 
-            if ($value->host != $this->referer->host) {
-                $this->cookies = new Cookies();
+            if ($this->properties['referer'] instanceof Url && $value->host != $this->properties['referer']->host) {
+                $this->properties['cookies'] = new Cookies();
             }
         }
 
@@ -125,35 +113,39 @@ class WebBrowser
             $value = new Cookies($value);
         }
 
-        $this->$key = $value;
+        if ($key == 'proxyServer' && !$value instanceof ProxyServer) {
+            $value = new ProxyServer($value);
+        }
+
+        if ($key == 'networkInterface' && !$value instanceof NetworkInterface) {
+            $value = new NetworkInterface($value);
+        }
+
+        $this->properties[$key] = $value;
     }
 
     /**
-     * @param $key
+     * @param string $key
      * @return mixed
      * @throws WebBrowserException
      */
     public function __get($key)
     {
-        if (!in_array(
-            $key,
-            array('url', 'referer', 'cookies', 'proxyServer', 'networkInterface', 'userAgent', 'followLocation')
-        )
+        if (!in_array($key, self::$propertiesKeys)
         ) {
             throw new WebBrowserException("WebBrowser: Неизвестное свойство '" . $key . "'");
         }
 
-        return $this->$key;
+        return $this->properties[$key];
     }
 
     /**
-     * @param $browsers
+     * @param WebBrowser[] $browsers
      * @return array
      */
     public static function MultiRequest($browsers)
     {
         $curls   = array();
-        $results = array();
 
         $mh = curl_multi_init();
 
@@ -163,7 +155,11 @@ class WebBrowser
             curl_setopt($curls[$id], CURLOPT_URL, $browser->url->url);
             curl_setopt($curls[$id], CURLOPT_AUTOREFERER, true);
             curl_setopt($curls[$id], CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($curls[$id], CURLOPT_REFERER, $browser->referer->url);
+
+            if ($browser->referer instanceof Url) {
+                curl_setopt($curls[$id], CURLOPT_REFERER, $browser->referer->url);
+            }
+
             curl_setopt($curls[$id], CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 
             if (!is_null($browser->userAgent)) {
@@ -202,7 +198,7 @@ class WebBrowser
             }
 
             curl_setopt($curls[$id], CURLOPT_HEADER, 1);
-            curl_setopt($curls[$id], CURLOPT_TIMEOUT, 30);
+            curl_setopt($curls[$id], CURLOPT_TIMEOUT, $browser->timeout);
 
             curl_multi_add_handle($mh, $curls[$id]);
         }
@@ -217,10 +213,13 @@ class WebBrowser
         $responses        = array();
         $locationBrowsers = array();
         foreach ($curls as $id => $content) {
-            $tmpResponse = new RawHttpResponse(curl_multi_getcontent($content), $browsers[$id]->getData());
+            $info     = curl_getinfo($curls[$id]);
+            $location = $info['redirect_url'];
+
+            $tmpResponse = new RawHttpResponse(curl_multi_getcontent($content), $browsers[$id]->getData(), $info);
             $browsers[$id]->cookies->ParseCookies($tmpResponse->header);
 
-            if ($browsers[$id]->followLocation && $location = $browsers[$id]->parseLocation($tmpResponse->header)) {
+            if ($browsers[$id]->followLocation && $location) {
                 $isLocation         = true;
                 $browsers[$id]->url = new Url($location);
                 $locationBrowsers[] = $browsers[$id];
@@ -246,13 +245,16 @@ class WebBrowser
      */
     public function request($data = null)
     {
-        $method = ($data) ? 'POST' : 'GET';
+        $method = (!is_null($data)) ? 'POST' : 'GET';
         $ch     = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $this->url->url);
         curl_setopt($ch, CURLOPT_AUTOREFERER, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_REFERER, (string)$this->referer->url);
+        if ($this->referer instanceof Url) {
+            curl_setopt($ch, CURLOPT_REFERER, $this->referer->url);
+        }
+
         curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 
         if (!is_null($this->userAgent)) {
@@ -293,8 +295,7 @@ class WebBrowser
         }
 
         curl_setopt($ch, CURLOPT_HEADER, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
 
         $result = curl_exec($ch);
 
@@ -308,7 +309,7 @@ class WebBrowser
         curl_close($ch);
 
         if ($result) {
-            $response = new RawHttpResponse($result, $this->getData());
+            $response = new RawHttpResponse($result, $this->getData(), $info);
             $this->cookies->parseCookies($response->header);
 
             if ($this->followLocation && $location) {
@@ -323,4 +324,62 @@ class WebBrowser
         return null;
     }
 
+    /**
+     * @param array $config
+     */
+    public function loadConfig($config = array())
+    {
+        if (isset($config['url'])) {
+            $this->url = new Url($config['url']);
+        }
+
+        if (isset($config['userAgent'])) {
+            $this->userAgent = (string)$config['userAgent'];
+        }
+
+        if (isset($config['referer'])) {
+            $this->referer = new Url($config['referer']);
+        }
+
+        if (isset($config['cookies'])) {
+            $this->cookies = new Cookies($config['cookies']);
+        }
+
+        if (isset($config['followLocation'])) {
+            $this->followLocation = (bool)$config['followLocation'];
+        }
+
+        $useCommonProxyInterfaceList = (isset($config['useCommonProxyInterfaceList']) && $config['useCommonProxyInterfaceList'] == true) ? true : false;
+        $proxyServerList             = $networkInterfaceList = array();
+
+        if (isset($config['networkInterface'])) {
+            if (!is_array($config['networkInterface'])) {
+                $this->networkInterface = new NetworkInterface($config['networkInterface']);
+            } elseif (!$useCommonProxyInterfaceList) {
+                $this->networkInterface = (new NetworkInterfaceList($config['networkInterface']))->getRandomObject();
+            } else {
+                $networkInterfaceList = $config['networkInterface'];
+            }
+        }
+
+        if (isset($config['proxyServer'])) {
+            if (!is_array($config['proxyServer'])) {
+                $this->proxyServer = new ProxyServer($config['proxyServer']);
+            } elseif (!$useCommonProxyInterfaceList) {
+                $this->proxyServer = (new ProxyServerList($config['proxyServer']))->getRandomObject();
+            } else {
+                $proxyServerList = $config['proxyServer'];
+            }
+        }
+
+        if ($useCommonProxyInterfaceList) {
+            $object = (new CommonProxyInterfaceList($proxyServerList, $networkInterfaceList))->getRandomObject();
+            if ($object instanceof ProxyServer) {
+                $this->proxyServer = $object;
+            } elseif ($object instanceof NetworkInterface) {
+                $this->networkInterface = $object;
+            }
+        }
+
+    }
 }
