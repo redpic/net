@@ -16,7 +16,7 @@ class RawHttpResponse
     /**
      * @var array
      */
-    private $response;
+    private $response = array('header' => '', 'content' => '');
     /**
      * @var array
      */
@@ -63,8 +63,8 @@ class RawHttpResponse
         if (array_key_exists($key, $this->info)) {
             return $this->info[$key];
         }
-        
-        if (array_key_exists($key, $this->response)) {
+
+        if (!array_key_exists($key, $this->response)) {
             throw new RawHttpResponseException("Неизвестное свойство '" . $key . "'");
         }
 
