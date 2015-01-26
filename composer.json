@@ -1,6 +1,6 @@
 {
   "name": "redpic/net",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "type": "library",
   "description": "Удобная обертка над curl для работы с HTTP",
   "keywords": [
