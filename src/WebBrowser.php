@@ -83,7 +83,7 @@ class WebBrowser
 
     /**
      * @param $key
-     * @param $value
+     * @param string|array|Url $value
      * @throws WebBrowserException
      */
     public function __set($key, $value)
@@ -106,22 +106,20 @@ class WebBrowser
         }
 
         if ($key == 'referer' && !$value instanceof Url) {
-            $value = new Url($value);
+            $this->properties[$key] = new Url($value);
         }
 
         if ($key == 'cookies' && !$value instanceof Cookies) {
-            $value = new Cookies($value);
+            $this->properties[$key] = new Cookies($value);
         }
 
         if ($key == 'proxyServer' && !$value instanceof ProxyServer) {
-            $value = new ProxyServer($value);
+            $this->properties[$key] = new ProxyServer($value);
         }
 
         if ($key == 'networkInterface' && !$value instanceof NetworkInterface) {
-            $value = new NetworkInterface($value);
+            $this->properties[$key] = new NetworkInterface($value);
         }
-
-        $this->properties[$key] = $value;
     }
 
     /**

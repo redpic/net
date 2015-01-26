@@ -13,6 +13,11 @@ abstract class AbstractList implements \Countable
      */
     protected $list = array();
 
+    /**
+     * @param string $message
+     * @param int $code
+     * @param \Exception $previous
+     */
     abstract protected function throws($message, $code = 0, \Exception $previous = null);
 
     /**
@@ -31,6 +36,7 @@ abstract class AbstractList implements \Countable
 
     /**
      * @param integer $id
+     * @return ProxyServer|NetworkInterface
      */
     public function getObjectById($id)
     {

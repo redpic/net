@@ -27,6 +27,12 @@ class NetworkInterfaceList extends AbstractList
         return $ret;
     }
 
+    /**
+     * @param string $message
+     * @param int $code
+     * @param \Exception $previous
+     * @throws NetworkInterfaceListException
+     */
     protected function throws($message, $code = 0, \Exception $previous = null)
     {
         throw new NetworkInterfaceListException($message, $code, $previous);

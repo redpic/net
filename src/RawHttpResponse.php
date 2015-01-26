@@ -7,17 +7,16 @@ use Redpic\Net\Exceptions\RawHttpResponseException;
 /**
  * Class RawHttpResponse
  * @package Redpic\Net
+ *
+ * @property string $header
+ * @property string $content
  */
 class RawHttpResponse
 {
     /**
-     * @var string
+     * @var array
      */
-    protected $header;
-    /**
-     * @var string
-     */
-    protected $content;
+    private $response;
     /**
      * @var array
      */
@@ -31,12 +30,12 @@ class RawHttpResponse
     /**
      * @param string $response
      * @param array $data
-     * @param $info
+     * @param array $info
      * @throws RawHttpResponseException
      */
     public function __construct($response, $data, $info)
     {
-        list($this->header, $this->content) = self::parseHeaderContent($response);
+        list($this->response['header'], $this->response['content']) = self::parseHeaderContent($response);
         $this->data = $data;
         $this->info = $info;
     }
@@ -65,11 +64,11 @@ class RawHttpResponse
             return $this->info[$key];
         }
         
-        if (!in_array($key, array('header', 'content'))) {
+        if (array_key_exists($key, $this->response)) {
             throw new RawHttpResponseException("Неизвестное свойство '" . $key . "'");
         }
 
-        return $this->$key;
+        return $this->response[$key];
     }
 
     /**

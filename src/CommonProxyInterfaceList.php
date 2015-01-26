@@ -28,6 +28,12 @@ class CommonProxyInterfaceList extends AbstractList
         }
     }
 
+    /**
+     * @param string $message
+     * @param int $code
+     * @param \Exception $previous
+     * @throws CommonProxyIntefaceException
+     */
     protected function throws($message, $code = 0, \Exception $previous = null)
     {
         throw new CommonProxyIntefaceException($message, $code, $previous);
