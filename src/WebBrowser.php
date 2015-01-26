@@ -22,7 +22,16 @@ class WebBrowser
     /**
      * @var array
      */
-    protected static $propertiesKeys = array('url', 'referer', 'proxyServer', 'networkInterface', 'userAgent', 'cookies', 'followLocation', 'timeout');
+    protected static $propertiesKeys = array(
+        'url',
+        'referer',
+        'proxyServer',
+        'networkInterface',
+        'userAgent',
+        'cookies',
+        'followLocation',
+        'timeout'
+    );
     /**
      * @var array $properties
      */
@@ -38,25 +47,26 @@ class WebBrowser
      */
     public function __construct($url = null, $userAgent = UserAgent::GoogleBot)
     {
-        $this->properties['url'] = null;
-        $this->properties['referer'] = null;
-        $this->properties['proxyServer'] = null;
+        $this->properties['url']              = null;
+        $this->properties['referer']          = null;
+        $this->properties['proxyServer']      = null;
         $this->properties['networkInterface'] = null;
-        $this->properties['followLocation'] = true;
-        $this->properties['timeout'] = 30;
-        $this->properties['userAgent'] = $userAgent;
-        $this->properties['cookies']   = new Cookies();
+        $this->properties['followLocation']   = true;
+        $this->properties['timeout']          = 30;
+        $this->properties['userAgent']        = $userAgent;
+        $this->properties['cookies']          = new Cookies();
 
-        if (null !== $url)
-        {
+        if (null !== $url) {
             if ($url instanceof Url) {
                 $this->properties['url'] = $url;
             } else {
                 $this->properties['url'] = new Url(trim($url));
             }
 
-            $this->properties['referer'] = new Url($this->properties['url']->scheme . '://' . $this->properties['url']->host);
-        }  
+            $this->properties['referer'] = new Url(
+                $this->properties['url']->scheme . '://' . $this->properties['url']->host
+            );
+        }
     }
 
     /**
@@ -93,32 +103,27 @@ class WebBrowser
         }
 
         if ($key == 'url') {
-            if ($this->properties['url'] instanceof Url) {
+            if ($value instanceof Url) {
+                $this->properties['url']     = $value;
                 $this->properties['referer'] = $this->properties['url'];
             }
             if (!$value instanceof Url) {
-                $value = new Url($value);
+                $this->properties['url'] = new Url($value);
             }
 
-            if ($this->properties['referer'] instanceof Url && $value->host != $this->properties['referer']->host) {
+            if ($this->properties['referer'] instanceof Url && $this->properties['url']->host != $this->properties['referer']->host) {
                 $this->properties['cookies'] = new Cookies();
             }
-        }
-
-        if ($key == 'referer' && !$value instanceof Url) {
+        } elseif ($key == 'referer' && !$value instanceof Url) {
             $this->properties[$key] = new Url($value);
-        }
-
-        if ($key == 'cookies' && !$value instanceof Cookies) {
+        } elseif ($key == 'cookies' && !$value instanceof Cookies) {
             $this->properties[$key] = new Cookies($value);
-        }
-
-        if ($key == 'proxyServer' && !$value instanceof ProxyServer) {
+        } elseif ($key == 'proxyServer' && !$value instanceof ProxyServer) {
             $this->properties[$key] = new ProxyServer($value);
-        }
-
-        if ($key == 'networkInterface' && !$value instanceof NetworkInterface) {
+        } elseif ($key == 'networkInterface' && !$value instanceof NetworkInterface) {
             $this->properties[$key] = new NetworkInterface($value);
+        } else {
+            $this->properties[$key] = $value;
         }
     }
 
@@ -143,7 +148,7 @@ class WebBrowser
      */
     public static function MultiRequest($browsers)
     {
-        $curls   = array();
+        $curls = array();
 
         $mh = curl_multi_init();
 
