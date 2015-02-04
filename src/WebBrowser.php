@@ -344,8 +344,9 @@ class WebBrowser
                 $resultArray[$tmpKey] = $value;
             }
         }
-
-        return $resultArray;
+        $result = $resultArray;
+        $resultArray = array();
+        return $result;
     }
 
     /**
