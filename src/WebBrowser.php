@@ -334,19 +334,16 @@ class WebBrowser
     /**
      * @param array $inputArray
      */
-    protected static function httpBuidCurl($inputArray, $inputKey = '') { 
-        static $resultArray = array();
+    private static function httpBuidCurl($inputArray, $inputKey = '', $resultArray = array()) {       
         foreach ($inputArray as $key => $value) {
             $tmpKey = (bool)$inputKey ? $inputKey . "[$key]" : $key;
             if (is_array($value)) {
-                self::httpBuidCurl($value, $tmpKey);
+                $resultArray = self::httpBuidCurl($value, $tmpKey, $resultArray);
             } else {
                 $resultArray[$tmpKey] = $value;
             }
         }
-        $result = $resultArray;
-        $resultArray = array();
-        return $result;
+        return $resultArray;
     }
 
     /**
