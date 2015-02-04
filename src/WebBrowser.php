@@ -284,6 +284,10 @@ class WebBrowser
         }
 
         if ($method == 'POST') {
+            if (is_array($data)) {
+                $data = self::httpBuidCurl($data);
+            }
+
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         }
@@ -328,53 +332,62 @@ class WebBrowser
     }
 
     /**
+     * @param array $inputArray
+     */
+    protected static function httpBuidCurl($inputArray, $inputKey = '') { 
+        static $resultArray = array();
+        foreach ($inputArray as $key => $value) {
+            $tmpKey = (bool)$inputKey ? $inputKey . "[$key]" : $key;
+            if (is_array($value)) {
+                self::httpBuidCurl($value, $tmpKey);
+            } else {
+                $resultArray[$tmpKey] = $value;
+            }
+        }
+
+        return $resultArray;
+    }
+
+    /**
      * @param array $config
      */
     public function loadConfig($config = array())
     {
-        if (isset($config['url'])) {
-            $this->url = new Url($config['url']);
-        }
-
-        if (isset($config['userAgent'])) {
-            $this->userAgent = (string)$config['userAgent'];
-        }
-
-        if (isset($config['referer'])) {
-            $this->referer = new Url($config['referer']);
-        }
-
-        if (isset($config['cookies'])) {
-            $this->cookies = new Cookies($config['cookies']);
-        }
-
-        if (isset($config['followLocation'])) {
-            $this->followLocation = (bool)$config['followLocation'];
-        }
-
         $useCommonProxyInterfaceList = (isset($config['useCommonProxyInterfaceList']) && $config['useCommonProxyInterfaceList'] == true) ? true : false;
         $proxyServerList             = $networkInterfaceList = array();
 
-        if (isset($config['networkInterface'])) {
-            if (!is_array($config['networkInterface'])) {
-                $this->networkInterface = new NetworkInterface($config['networkInterface']);
-            } elseif (!$useCommonProxyInterfaceList) {
-                $this->networkInterface = (new NetworkInterfaceList($config['networkInterface']))->getRandomObject();
-            } else {
-                $networkInterfaceList = $config['networkInterface'];
+        foreach ($config as $key => $value) {
+            if ($key == 'url') {
+                $this->url = new Url($value);
+            } elseif ($key == 'userAgent') {
+                $this->userAgent = (string)$value;
+            } elseif ($key == 'referer') {
+                $this->referer = new Url($value);
+            } elseif ($key == 'cookies') {
+                $this->cookies = new Cookies($value);
+            } elseif ($key == 'followLocation') {
+                $this->followLocation = (bool)$value;
+            } elseif ($key == 'networkInterface') {
+                if (!is_array($value)) {
+                    $this->networkInterface = new NetworkInterface($value);
+                } elseif (!$useCommonProxyInterfaceList) {
+                    $this->networkInterface = (new NetworkInterfaceList($value))->getRandomObject();
+                } else {
+                    $networkInterfaceList = $value;
+                }
+            } elseif ($value == 'proxyServer') {
+                if (!is_array($value)) {
+                    $this->proxyServer = new ProxyServer($value);
+                } elseif (!$useCommonProxyInterfaceList) {
+                    $this->proxyServer = (new ProxyServerList($value))->getRandomObject();
+                } else {
+                    $proxyServerList = $value;
+                }
+            } elseif (in_array($key, self::$propertiesKeys)) {
+                $this->$key = $value;
             }
         }
-
-        if (isset($config['proxyServer'])) {
-            if (!is_array($config['proxyServer'])) {
-                $this->proxyServer = new ProxyServer($config['proxyServer']);
-            } elseif (!$useCommonProxyInterfaceList) {
-                $this->proxyServer = (new ProxyServerList($config['proxyServer']))->getRandomObject();
-            } else {
-                $proxyServerList = $config['proxyServer'];
-            }
-        }
-
+        
         if ($useCommonProxyInterfaceList) {
             $object = (new CommonProxyInterfaceList($proxyServerList, $networkInterfaceList))->getRandomObject();
             if ($object instanceof ProxyServer) {
@@ -383,6 +396,5 @@ class WebBrowser
                 $this->networkInterface = $object;
             }
         }
-
     }
 }
