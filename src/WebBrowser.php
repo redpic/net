@@ -285,7 +285,7 @@ class WebBrowser
 
         if ($method == 'POST') {
             if (is_array($data)) {
-                $data = self::httpBuidCurl($data);
+                $data = self::httpBuildCurl($data);
             }
 
             curl_setopt($ch, CURLOPT_POST, 1);
@@ -334,11 +334,11 @@ class WebBrowser
     /**
      * @param array $inputArray
      */
-    private static function httpBuidCurl($inputArray, $inputKey = '', $resultArray = array()) {       
+    private static function httpBuildCurl($inputArray, $inputKey = '', $resultArray = array()) {       
         foreach ($inputArray as $key => $value) {
             $tmpKey = (bool)$inputKey ? $inputKey . "[$key]" : $key;
             if (is_array($value)) {
-                $resultArray = self::httpBuidCurl($value, $tmpKey, $resultArray);
+                $resultArray = self::httpBuildCurl($value, $tmpKey, $resultArray);
             } else {
                 $resultArray[$tmpKey] = $value;
             }
