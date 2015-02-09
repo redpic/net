@@ -30,7 +30,8 @@ class WebBrowser
         'userAgent',
         'cookies',
         'followLocation',
-        'timeout'
+        'timeout',
+        'post',
     );
     /**
      * @var array $properties
@@ -55,6 +56,8 @@ class WebBrowser
         $this->properties['timeout']          = 30;
         $this->properties['userAgent']        = $userAgent;
         $this->properties['cookies']          = new Cookies();
+        $this->properties['post']             = new PostParameter();
+
 
         if (null !== $url) {
             if ($url instanceof Url) {
@@ -122,6 +125,8 @@ class WebBrowser
             $this->properties[$key] = new ProxyServer($value);
         } elseif ($key == 'networkInterface' && !$value instanceof NetworkInterface) {
             $this->properties[$key] = new NetworkInterface($value);
+        } elseif ($key == 'post' && !$value instanceof PostParameter) {
+            $this->properties[$key] = new PostParameter($value);
         } else {
             $this->properties[$key] = $value;
         }
@@ -192,6 +197,11 @@ class WebBrowser
                 curl_setopt($curls[$id], CURLOPT_INTERFACE, $browser->networkInterface->ip);
             }
 
+            if (count($browser->post)) {
+                curl_setopt($curls[$id], CURLOPT_POST, 1);
+                curl_setopt($curls[$id], CURLOPT_POSTFIELDS, $browser->post->toArray());
+            }
+
             $header   = array();
             $header[] = "Host: " . $browser->url->host;
             curl_setopt($curls[$id], CURLOPT_HTTPHEADER, $header);
@@ -219,6 +229,8 @@ class WebBrowser
             $info     = curl_getinfo($curls[$id]);
             $location = $info['redirect_url'];
 
+            $browsers[$id]->post = new PostParameter();
+
             $tmpResponse = new RawHttpResponse(curl_multi_getcontent($content), $browsers[$id]->getData(), $info);
             $browsers[$id]->cookies->ParseCookies($tmpResponse->header);
 
@@ -242,14 +254,12 @@ class WebBrowser
     }
 
     /**
-     * @param null $data
      * @return null|RawHttpResponse
      * @throws WebBrowserException
      */
-    public function request($data = null)
+    public function request()
     {
-        $method = (!is_null($data)) ? 'POST' : 'GET';
-        $ch     = curl_init();
+        $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $this->url->url);
         curl_setopt($ch, CURLOPT_AUTOREFERER, true);
@@ -283,13 +293,9 @@ class WebBrowser
             curl_setopt($ch, CURLOPT_INTERFACE, $this->networkInterface->ip);
         }
 
-        if ($method == 'POST') {
-            if (is_array($data)) {
-                $data = self::httpBuildCurl($data);
-            }
-
+        if (count($this->post)) {
             curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $this->post->toArray());
         }
 
         $header   = array();
@@ -297,7 +303,7 @@ class WebBrowser
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
 
-        if ($this->cookies->count()) {
+        if (count($this->cookies)) {
             curl_setopt($ch, CURLOPT_COOKIE, $this->cookies->__toString());
         }
 
@@ -312,6 +318,8 @@ class WebBrowser
 
         $info     = curl_getinfo($ch);
         $location = $info['redirect_url'];
+
+        $this->post = new PostParameter();
 
         curl_close($ch);
 
@@ -329,21 +337,6 @@ class WebBrowser
         }
 
         return null;
-    }
-
-    /**
-     * @param array $inputArray
-     */
-    private static function httpBuildCurl($inputArray, $inputKey = '', $resultArray = array()) {       
-        foreach ($inputArray as $key => $value) {
-            $tmpKey = (bool)$inputKey ? $inputKey . "[$key]" : $key;
-            if (is_array($value)) {
-                $resultArray = self::httpBuildCurl($value, $tmpKey, $resultArray);
-            } else {
-                $resultArray[$tmpKey] = $value;
-            }
-        }
-        return $resultArray;
     }
 
     /**
