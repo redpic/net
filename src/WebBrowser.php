@@ -16,6 +16,7 @@ use Redpic\Net\Exceptions\WebBrowserException;
  * @property Cookies $cookies
  * @property boolean $followLocation
  * @property int $timeout
+ * @property PostParameter $post
  */
 class WebBrowser
 {
@@ -179,6 +180,10 @@ class WebBrowser
                 curl_setopt($curls[$id], CURLOPT_SSL_VERIFYHOST, false);
             }
 
+            if ($browser->url->user && $browser->url->password) {
+                curl_setopt($curls[$id], CURLOPT_USERPWD, $browser->url->user . ':' . $browser->url->password);
+            }
+
             if (!is_null($browser->proxyServer)) {
                 curl_setopt($curls[$id], CURLOPT_PROXYAUTH, CURLAUTH_BASIC);
                 curl_setopt($curls[$id], CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
@@ -277,6 +282,10 @@ class WebBrowser
         if ($this->url->scheme == 'https') {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        }
+
+        if ($this->url->user && $this->url->password) {
+            curl_setopt($ch, CURLOPT_USERPWD, $this->url->user . ':' . $this->url->password);
         }
 
         if (!is_null($this->proxyServer)) {
