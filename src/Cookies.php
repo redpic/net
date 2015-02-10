@@ -14,7 +14,7 @@ class Cookies implements \Serializable, \Countable
     protected $cookies = array();
 
     /**
-     * @param array $cookies
+     * @param mixed $cookies
      */
     public function __construct($cookies = array())
     {
