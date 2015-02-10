@@ -16,6 +16,7 @@ use Redpic\Net\Exceptions\WebBrowserException;
  * @property Cookies $cookies
  * @property boolean $followLocation
  * @property int $timeout
+ * @property PostParameter $post
  */
 class WebBrowser
 {
@@ -30,7 +31,8 @@ class WebBrowser
         'userAgent',
         'cookies',
         'followLocation',
-        'timeout'
+        'timeout',
+        'post',
     );
     /**
      * @var array $properties
@@ -55,6 +57,8 @@ class WebBrowser
         $this->properties['timeout']          = 30;
         $this->properties['userAgent']        = $userAgent;
         $this->properties['cookies']          = new Cookies();
+        $this->properties['post']             = new PostParameter();
+
 
         if (null !== $url) {
             if ($url instanceof Url) {
@@ -122,6 +126,8 @@ class WebBrowser
             $this->properties[$key] = new ProxyServer($value);
         } elseif ($key == 'networkInterface' && !$value instanceof NetworkInterface) {
             $this->properties[$key] = new NetworkInterface($value);
+        } elseif ($key == 'post' && !$value instanceof PostParameter) {
+            $this->properties[$key] = new PostParameter($value);
         } else {
             $this->properties[$key] = $value;
         }
@@ -174,6 +180,10 @@ class WebBrowser
                 curl_setopt($curls[$id], CURLOPT_SSL_VERIFYHOST, false);
             }
 
+            if ($browser->url->user && $browser->url->password) {
+                curl_setopt($curls[$id], CURLOPT_USERPWD, $browser->url->user . ':' . $browser->url->password);
+            }
+
             if (!is_null($browser->proxyServer)) {
                 curl_setopt($curls[$id], CURLOPT_PROXYAUTH, CURLAUTH_BASIC);
                 curl_setopt($curls[$id], CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
@@ -190,6 +200,11 @@ class WebBrowser
 
             if (!is_null($browser->networkInterface)) {
                 curl_setopt($curls[$id], CURLOPT_INTERFACE, $browser->networkInterface->ip);
+            }
+
+            if (count($browser->post)) {
+                curl_setopt($curls[$id], CURLOPT_POST, 1);
+                curl_setopt($curls[$id], CURLOPT_POSTFIELDS, $browser->post->toArray());
             }
 
             $header   = array();
@@ -219,6 +234,8 @@ class WebBrowser
             $info     = curl_getinfo($curls[$id]);
             $location = $info['redirect_url'];
 
+            $browsers[$id]->post = new PostParameter();
+
             $tmpResponse = new RawHttpResponse(curl_multi_getcontent($content), $browsers[$id]->getData(), $info);
             $browsers[$id]->cookies->ParseCookies($tmpResponse->header);
 
@@ -242,14 +259,12 @@ class WebBrowser
     }
 
     /**
-     * @param null $data
      * @return null|RawHttpResponse
      * @throws WebBrowserException
      */
-    public function request($data = null)
+    public function request()
     {
-        $method = (!is_null($data)) ? 'POST' : 'GET';
-        $ch     = curl_init();
+        $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $this->url->url);
         curl_setopt($ch, CURLOPT_AUTOREFERER, true);
@@ -269,6 +284,10 @@ class WebBrowser
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         }
 
+        if ($this->url->user && $this->url->password) {
+            curl_setopt($ch, CURLOPT_USERPWD, $this->url->user . ':' . $this->url->password);
+        }
+
         if (!is_null($this->proxyServer)) {
             curl_setopt($ch, CURLOPT_PROXYAUTH, CURLAUTH_BASIC);
             curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
@@ -283,9 +302,9 @@ class WebBrowser
             curl_setopt($ch, CURLOPT_INTERFACE, $this->networkInterface->ip);
         }
 
-        if ($method == 'POST') {
+        if (count($this->post)) {
             curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $this->post->toArray());
         }
 
         $header   = array();
@@ -293,7 +312,7 @@ class WebBrowser
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
 
-        if ($this->cookies->count()) {
+        if (count($this->cookies)) {
             curl_setopt($ch, CURLOPT_COOKIE, $this->cookies->__toString());
         }
 
@@ -308,6 +327,8 @@ class WebBrowser
 
         $info     = curl_getinfo($ch);
         $location = $info['redirect_url'];
+
+        $this->post = new PostParameter();
 
         curl_close($ch);
 
@@ -332,49 +353,41 @@ class WebBrowser
      */
     public function loadConfig($config = array())
     {
-        if (isset($config['url'])) {
-            $this->url = new Url($config['url']);
-        }
-
-        if (isset($config['userAgent'])) {
-            $this->userAgent = (string)$config['userAgent'];
-        }
-
-        if (isset($config['referer'])) {
-            $this->referer = new Url($config['referer']);
-        }
-
-        if (isset($config['cookies'])) {
-            $this->cookies = new Cookies($config['cookies']);
-        }
-
-        if (isset($config['followLocation'])) {
-            $this->followLocation = (bool)$config['followLocation'];
-        }
-
         $useCommonProxyInterfaceList = (isset($config['useCommonProxyInterfaceList']) && $config['useCommonProxyInterfaceList'] == true) ? true : false;
         $proxyServerList             = $networkInterfaceList = array();
 
-        if (isset($config['networkInterface'])) {
-            if (!is_array($config['networkInterface'])) {
-                $this->networkInterface = new NetworkInterface($config['networkInterface']);
-            } elseif (!$useCommonProxyInterfaceList) {
-                $this->networkInterface = (new NetworkInterfaceList($config['networkInterface']))->getRandomObject();
-            } else {
-                $networkInterfaceList = $config['networkInterface'];
+        foreach ($config as $key => $value) {
+            if ($key == 'url') {
+                $this->url = new Url($value);
+            } elseif ($key == 'userAgent') {
+                $this->userAgent = (string)$value;
+            } elseif ($key == 'referer') {
+                $this->referer = new Url($value);
+            } elseif ($key == 'cookies') {
+                $this->cookies = new Cookies($value);
+            } elseif ($key == 'followLocation') {
+                $this->followLocation = (bool)$value;
+            } elseif ($key == 'networkInterface') {
+                if (!is_array($value)) {
+                    $this->networkInterface = new NetworkInterface($value);
+                } elseif (!$useCommonProxyInterfaceList) {
+                    $this->networkInterface = (new NetworkInterfaceList($value))->getRandomObject();
+                } else {
+                    $networkInterfaceList = $value;
+                }
+            } elseif ($value == 'proxyServer') {
+                if (!is_array($value)) {
+                    $this->proxyServer = new ProxyServer($value);
+                } elseif (!$useCommonProxyInterfaceList) {
+                    $this->proxyServer = (new ProxyServerList($value))->getRandomObject();
+                } else {
+                    $proxyServerList = $value;
+                }
+            } elseif (in_array($key, self::$propertiesKeys)) {
+                $this->$key = $value;
             }
         }
-
-        if (isset($config['proxyServer'])) {
-            if (!is_array($config['proxyServer'])) {
-                $this->proxyServer = new ProxyServer($config['proxyServer']);
-            } elseif (!$useCommonProxyInterfaceList) {
-                $this->proxyServer = (new ProxyServerList($config['proxyServer']))->getRandomObject();
-            } else {
-                $proxyServerList = $config['proxyServer'];
-            }
-        }
-
+        
         if ($useCommonProxyInterfaceList) {
             $object = (new CommonProxyInterfaceList($proxyServerList, $networkInterfaceList))->getRandomObject();
             if ($object instanceof ProxyServer) {
@@ -383,6 +396,5 @@ class WebBrowser
                 $this->networkInterface = $object;
             }
         }
-
     }
 }
