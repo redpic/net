@@ -43,6 +43,9 @@ class WebBrowser
      */
     protected $data;
 
+
+    private $debug = false;
+
     /**
      * @param null|string|Url $url
      * @param string $userAgent
@@ -71,6 +74,16 @@ class WebBrowser
                 $this->properties['url']->scheme . '://' . $this->properties['url']->host
             );
         }
+    }
+
+    public function enableDebug()
+    {
+        $this->debug = true;
+    }
+
+    public function disableDebug()
+    {
+        $this->debug = false;
     }
 
     /**
@@ -295,8 +308,7 @@ class WebBrowser
         }
 
         if (count($this->post)) {
-            curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $this->post->toArray());
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $this->post->get());
         }
 
         $header   = array();
@@ -311,11 +323,24 @@ class WebBrowser
         curl_setopt($ch, CURLOPT_HEADER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
 
+        
+        if ($this->debug) {
+            curl_setopt($ch, CURLOPT_VERBOSE, true);
+            $verbose = fopen('php://temp', 'rw+');
+            curl_setopt($ch, CURLOPT_STDERR, $verbose);
+        }
+
         $result = curl_exec($ch);
 
-        if ($result === false) {
-            throw new WebBrowserException(curl_error($ch));
-        }
+        if (false === $result) {   
+            if ($this->debug) {
+                rewind($verbose);
+                $verboseLog = stream_get_contents($verbose);
+                throw new WebBrowserException(curl_error($ch) . "\nVerbose information:\n" . htmlspecialchars($verboseLog));
+            } else {
+                throw new WebBrowserException(curl_error($ch));
+            }
+        } 
 
         $info     = curl_getinfo($ch);
         $location = $info['redirect_url'];

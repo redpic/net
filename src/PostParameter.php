@@ -8,6 +8,8 @@ namespace Redpic\Net;
  */
 class PostParameter implements \ArrayAccess, \Iterator, \Countable
 {
+    private $upload = false;
+
     /**
      * @var array
      */
@@ -19,7 +21,7 @@ class PostParameter implements \ArrayAccess, \Iterator, \Countable
     public function __construct($data = array())
     {
         if (!is_array($data)) {
-            parse_str($data, $data);
+            $data = self::parseStr($data);
         }
 
         foreach ($data as $key => $value) {
@@ -39,12 +41,9 @@ class PostParameter implements \ArrayAccess, \Iterator, \Countable
         }
     }
 
-    /**
-     * @return array
-     */
-    public function toArray()
+    public function get()
     {
-        return self::httpBuildCurl($this->data);
+        return ($this->upload) ? self::httpBuildCurl($this->data) : http_build_query(self::httpBuildCurl($this->data));
     }
 
     /**
@@ -73,6 +72,8 @@ class PostParameter implements \ArrayAccess, \Iterator, \Countable
     {
         if (is_array($data)) {
             $data = new self($data);
+        } elseif ($data instanceof \CurlFile) {
+            $this->upload = true;
         }
         if ($offset === null) {
             $this->data[] = $data;
@@ -154,5 +155,29 @@ class PostParameter implements \ArrayAccess, \Iterator, \Countable
             }
         }
         return $resultArray;
+    }
+
+    protected static function parseStr($str) 
+    {
+        $arr = array();
+        $pairs = explode('&', $str);
+        foreach ($pairs as $i) {
+            list($name, $value) = explode('=', $i, 2);
+            $name = urldecode($name);
+            $value = urldecode($value);
+            if (isset($arr[$name])) {
+                if (is_array($arr[$name])) {
+                    $arr[$name][] = $value;
+                }
+                else {
+                    $arr[$name] = array($arr[$name], $value);
+                }
+            }
+            else {
+                $arr[$name] = $value;
+            }
+        }
+
+        return $arr;
     }
 }
