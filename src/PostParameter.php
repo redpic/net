@@ -6,11 +6,17 @@ namespace Redpic\Net;
  * Class PostParameter
  * @package Redpic\Net
  */
-class PostParameter implements \ArrayAccess, \Iterator, \Countable 
+class PostParameter implements \ArrayAccess, \Iterator, \Countable
 {
+    /**
+     * @var array
+     */
     protected $data = array();
 
-    public function __construct($data = array()) 
+    /**
+     * @param mixed $data
+     */
+    public function __construct($data = array())
     {
         if (!is_array($data)) {
             parse_str($data, $data);
@@ -21,7 +27,10 @@ class PostParameter implements \ArrayAccess, \Iterator, \Countable
         }    
     }
 
-    public function __clone() 
+    /**
+     *
+     */
+    public function __clone()
     {
         foreach ($this->data as $key => $value) {
             if ($value instanceof self) {
@@ -30,22 +39,37 @@ class PostParameter implements \ArrayAccess, \Iterator, \Countable
         }
     }
 
-    public function toArray() 
+    /**
+     * @return array
+     */
+    public function toArray()
     {
         return self::httpBuildCurl($this->data);
     }
-    
-    public function offsetExists($offset) 
+
+    /**
+     * @param mixed $offset
+     * @return bool
+     */
+    public function offsetExists($offset)
     {
         return isset($this->data[$offset]);
     }
 
-    public function offsetGet($offset) 
+    /**
+     * @param mixed $offset
+     * @return null
+     */
+    public function offsetGet($offset)
     {
         return isset($this->data[$offset]) ? $this->data[$offset] : null;
     }
 
-    public function offsetSet($offset, $data) 
+    /**
+     * @param mixed $offset
+     * @param mixed $data
+     */
+    public function offsetSet($offset, $data)
     {
         if (is_array($data)) {
             $data = new self($data);
@@ -57,45 +81,69 @@ class PostParameter implements \ArrayAccess, \Iterator, \Countable
         }
     }
 
-    public function offsetUnset($offset) 
+    /**
+     * @param mixed $offset
+     */
+    public function offsetUnset($offset)
     {
         unset($this->data[$offset]);
     }
 
-    public function current() 
+    /**
+     * @return mixed
+     */
+    public function current()
     {
         return current($this->data);
     }
 
-    public function key() 
+    /**
+     * @return mixed
+     */
+    public function key()
     {
         return key($this->data);
     }
-    
-    public function next() 
+
+    /**
+     *
+     */
+    public function next()
     {
         next($this->data);
     }
 
-    public function rewind() 
+    /**
+     *
+     */
+    public function rewind()
     {
         reset($this->data);
     }
-    
-    public function valid() 
+
+    /**
+     * @return bool
+     */
+    public function valid()
     {
         return $this->offsetExists($this->key());
     }
-    
-    public function count() 
+
+    /**
+     * @return int
+     */
+    public function count()
     {
         return count($this->data);
     }
 
     /**
-     * @param array $inputArray
+     * @param $inputArray
+     * @param string $inputKey
+     * @param array $resultArray
+     * @return array
      */
-    private static function httpBuildCurl($inputArray, $inputKey = '', $resultArray = array()) 
+    private static function httpBuildCurl($inputArray, $inputKey = '', $resultArray = array())
     {       
         foreach ($inputArray as $key => $value) {
             $tmpKey = (bool)$inputKey ? $inputKey . "[" . $key . "]" : $key;
