@@ -3,7 +3,7 @@
 namespace Redpic\Net\Exceptions;
 
 /**
- * Class AbstractException
+ * Class NetException
  * @package Redpic\Net\Exceptions
  */
 abstract class NetException extends \Exception
