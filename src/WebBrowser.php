@@ -213,7 +213,7 @@ class WebBrowser
 
             if (count($browser->post)) {
                 curl_setopt($curls[$id], CURLOPT_POST, 1);
-                curl_setopt($curls[$id], CURLOPT_POSTFIELDS, $browser->post->toArray());
+                curl_setopt($curls[$id], CURLOPT_POSTFIELDS, $browser->post->get());
             }
 
             $header   = array();
@@ -323,6 +323,7 @@ class WebBrowser
         curl_setopt($ch, CURLOPT_HEADER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
 
+        $verbose = null;
         
         if ($this->debug) {
             curl_setopt($ch, CURLOPT_VERBOSE, true);

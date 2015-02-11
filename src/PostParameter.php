@@ -8,6 +8,9 @@ namespace Redpic\Net;
  */
 class PostParameter implements \ArrayAccess, \Iterator, \Countable
 {
+    /**
+     * @var bool
+     */
     private $upload = false;
 
     /**
@@ -21,7 +24,7 @@ class PostParameter implements \ArrayAccess, \Iterator, \Countable
     public function __construct($data = array())
     {
         if (!is_array($data)) {
-            $data = self::parseStr($data);
+            $data = self::parse_qs($data);
         }
 
         foreach ($data as $key => $value) {
@@ -157,27 +160,18 @@ class PostParameter implements \ArrayAccess, \Iterator, \Countable
         return $resultArray;
     }
 
-    protected static function parseStr($str) 
+    /**
+     * @param string $data
+     * @return array
+     */
+    protected static function parse_qs($data)
     {
-        $arr = array();
-        $pairs = explode('&', $str);
-        foreach ($pairs as $i) {
-            list($name, $value) = explode('=', $i, 2);
-            $name = urldecode($name);
-            $value = urldecode($value);
-            if (isset($arr[$name])) {
-                if (is_array($arr[$name])) {
-                    $arr[$name][] = $value;
-                }
-                else {
-                    $arr[$name] = array($arr[$name], $value);
-                }
-            }
-            else {
-                $arr[$name] = $value;
-            }
-        }
+        $data = preg_replace_callback('/(?:^|(?<=&))[^=[]+/', function($match) {
+            return bin2hex(urldecode($match[0]));
+        }, $data);
 
-        return $arr;
+        parse_str($data, $values);
+
+        return array_combine(array_map('hex2bin', array_keys($values)), $values);
     }
 }
