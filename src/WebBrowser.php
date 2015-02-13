@@ -393,7 +393,7 @@ class WebBrowser
                 } else {
                     $networkInterfaceList = $value;
                 }
-            } elseif ($value == 'proxyServer') {
+            } elseif ($key == 'proxyServer') {
                 if (!is_array($value)) {
                     $this->proxyServer = new ProxyServer($value);
                 } elseif (!$useCommonProxyInterfaceList) {
