@@ -74,7 +74,7 @@ class Cookies implements \Serializable, \Countable
 
         if (preg_match_all("#Set-Cookie: (.+)#iu", $header, $matches)) {
             for ($i = 0; $i < count($matches[1]); $i++) {
-                $cookiesString = $matches[1][$i];
+                $cookiesString = trim($matches[1][$i]);
                 $this->cookies = array_merge($this->cookies, self::cookiesStringToArray($cookiesString));
             }
         }
