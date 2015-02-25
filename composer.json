@@ -1,6 +1,6 @@
 {
   "name": "redpic/net",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "type": "library",
   "description": "Удобная обертка над curl для работы с HTTP",
   "keywords": [
@@ -18,7 +18,8 @@
     }
   ],
   "require": {
-    "php": ">=5.5.0"
+    "php": ">=5.5.0",
+    "php-idna-converter/php-idna-converter": "0.6.*"
   },
   "autoload": {
     "psr-4": {"Redpic\\Net\\": "src/"}
