@@ -10,6 +10,33 @@ use Redpic\Net\Exceptions\RawHttpResponseException;
  *
  * @property string $header
  * @property string $content
+ *
+ * @property string $url
+ * @property string $content_type
+ * @property integer $http_code
+ * @property integer $header_size
+ * @property integer $request_size
+ * @property integer $filetime
+ * @property integer $ssl_verify_result
+ * @property integer $redirect_count
+ * @property float $total_time
+ * @property float $namelookup_time
+ * @property float $connect_time
+ * @property float $pretransfer_time
+ * @property float $size_upload
+ * @property float $size_download
+ * @property float $speed_download
+ * @property float $speed_upload
+ * @property float $download_content_length
+ * @property float $upload_content_length
+ * @property float $starttransfer_time
+ * @property float $redirect_time
+ * @property string $redirect_url
+ * @property string $primary_ip
+ * @property array $certinfo
+ * @property integer $primary_port
+ * @property string $local_ip
+ * @property integer $local_port
  */
 class RawHttpResponse
 {
