@@ -58,6 +58,8 @@ class Url
         $this->properties['path']     = (isset($arr['path'])) ? $arr['path'] : null;
         $this->properties['query']    = (isset($arr['query'])) ? $arr['query'] : null;
         $this->properties['fragment'] = (isset($arr['fragment'])) ? $arr['fragment'] : null;
+
+        $this->IDNA();
     }
 
     /**
@@ -80,5 +82,23 @@ class Url
     public function __toString()
     {
         return $this->properties['url'];
+    }
+
+    /**
+     *
+     */
+    private function IDNA()
+    {
+        if (class_exists('idna_convert')) {
+            $IDNA         = new \idna_convert();
+            $encoded_host = $IDNA->encode($this->host);
+
+            if ($encoded_host != $this->host) {
+                $this->properties['url']  = str_replace($this->host, $encoded_host, $this->url);
+                $this->properties['host'] = $encoded_host;
+            }
+
+            unset($IDNA);
+        }
     }
 }
