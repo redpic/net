@@ -331,11 +331,7 @@ class WebBrowser
             curl_setopt($ch, CURLOPT_STDERR, $verbose);
         }
 
-        try {
-            $result = curl_exec($ch);
-        } catch (\Exception $e) {
-            throw new WebBrowserException('Curl Fatal error: '.$e->getMessage());
-        }
+        $result = curl_exec($ch);
 
         if (false === $result) {   
             if ($this->debug) {
