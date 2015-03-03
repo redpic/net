@@ -57,11 +57,19 @@ abstract class AbstractList implements \Countable
     }
 
     /**
-     * @return mixed
+     * @return NetworkInterface|ProxyServer
      */
     public function getRandomObject()
     {
         $id = array_rand($this->list);
         return $this->list[$id];
+    }
+
+    /**
+     * @param $num
+     * @return NetworkInterface|ProxyServer
+     */
+    function getObjectRotatedByNum($num) {
+        return $this->list[$num % count($this->list)];
     }
 }
