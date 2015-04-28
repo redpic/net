@@ -59,7 +59,9 @@ class Url
         $this->properties['query']    = (isset($arr['query'])) ? $arr['query'] : null;
         $this->properties['fragment'] = (isset($arr['fragment'])) ? $arr['fragment'] : null;
 
-        $this->IDNA();
+        if (filter_var($this->properties['host'], FILTER_VALIDATE_IP) === false) {
+            $this->IDNA();
+        }
     }
 
     /**
